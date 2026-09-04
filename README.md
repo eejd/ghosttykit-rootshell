@@ -2,7 +2,7 @@
 
 This repository is the public binary Swift package for rootshell's Zig-built
 GhosttyKit. Source builds live in the public
-[`ghostty-rootshell`](https://github.com/kitknox/ghostty-rootshell)
+[`ghostty-rootshell`](https://github.com/eejd/ghostty-rootshell)
 repository; this repository contains only the Swift package manifest, release
 tooling, and release assets.
 
@@ -23,8 +23,8 @@ Add the package over HTTPS and pin an exact release:
 
 ```swift
 .package(
-    url: "https://github.com/kitknox/ghosttykit-rootshell.git",
-    exact: "0.2.0"
+    url: "https://github.com/eejd/ghosttykit-rootshell.git",
+    exact: "0.2.6"
 )
 ```
 
@@ -37,19 +37,28 @@ The release script discovers checkouts portably. Explicit options take
 precedence over environment variables and sibling checkout fallbacks.
 
 ```bash
-./scripts/release.sh 0.1.0 \
+./scripts/release.sh prepare 0.2.6 \
+  --repo eejd/ghosttykit-rootshell \
   --rootshell-source /path/to/rootshell \
-  --ghostty-source /path/to/ghostty
+  --ghostty-source /path/to/ghostty-rootshell
 ```
 
-Environment alternatives are `ROOTSHELL_SOURCE_DIR` and
-`GHOSTTY_SOURCE_DIR`. With sibling checkouts named `rootshell` and `ghostty`,
-the options can be omitted.
+Environment alternatives are `ROOTSHELL_SOURCE_DIR`, `GHOSTTY_SOURCE_DIR`,
+and `GHOSTTYKIT_REPOSITORY`. With sibling checkouts named `swift-rootshell`
+and `ghostty-rootshell`, the path options can be omitted.
 
 Publishing requires Zig 0.16.x, Xcode command-line tools, authenticated `git`
-access, and an authenticated GitHub CLI. The script builds and audits both
-artifacts, creates a draft release, updates checksums and public release URLs,
-commits and tags the manifest, pushes it, and then publishes the release.
+access, and an authenticated GitHub CLI. `prepare` builds and audits both
+artifacts, creates the draft release, and updates the manifest. Commit and
+review that manifest normally. After it is merged, run from the clean,
+up-to-date default branch:
+
+```bash
+./scripts/release.sh publish 0.2.6 --repo eejd/ghosttykit-rootshell
+```
+
+The publish phase verifies the reviewed manifest and draft assets before it
+tags the merged commit and makes the release public.
 
 ## License
 
