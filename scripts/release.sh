@@ -139,6 +139,12 @@ manifest_checksum() {
     ' "$PACKAGE_DIR/Package.swift"
 }
 
+manifest_url_count() {
+    local url="$1"
+    awk -v url="$url" 'index($0, url) { count += 1 } END { print count + 0 }' \
+        "$PACKAGE_DIR/Package.swift"
+}
+
 if [[ "$MODE" == prepare ]]; then
     if [[ -n "$(git -C "$PACKAGE_DIR" status --porcelain)" ]]; then
         echo "ERROR: package repository must be clean before preparing a release" >&2
@@ -181,6 +187,12 @@ if [[ "$MODE" == prepare ]]; then
     LOCAL_PACKAGE="$ROOTSHELL_SOURCE/.local-packages/ghosttykit-rootshell"
     APPSTORE_ID="$(<"$LOCAL_PACKAGE/Artifacts/AppStore/current")"
     STANDALONE_ID="$(<"$LOCAL_PACKAGE/Artifacts/Standalone/current")"
+    GHOSTTY_SHORT_REVISION="$(git -C "$GHOSTTY_SOURCE" rev-parse --short HEAD)"
+    if [[ "$APPSTORE_ID" != "$GHOSTTY_SHORT_REVISION-"* ||
+          "$STANDALONE_ID" != "$GHOSTTY_SHORT_REVISION-"* ]]; then
+        echo "ERROR: selected artifacts were not both built from Ghostty $GHOSTTY_SHORT_REVISION" >&2
+        exit 1
+    fi
     APPSTORE_XCF="$LOCAL_PACKAGE/Artifacts/AppStore/$APPSTORE_ID/GhosttyKitAppStore.xcframework"
     STANDALONE_XCF="$LOCAL_PACKAGE/Artifacts/Standalone/$STANDALONE_ID/GhosttyKitStandalone.xcframework"
 
@@ -263,8 +275,11 @@ if [[ "$(git -C "$PACKAGE_DIR" rev-parse HEAD)" != "$(git -C "$PACKAGE_DIR" rev-
     echo "ERROR: local $DEFAULT_BRANCH must exactly match origin/$DEFAULT_BRANCH" >&2
     exit 1
 fi
-if ! grep -Fq "github.com/$REPOSITORY/releases/download/$TAG/" "$PACKAGE_DIR/Package.swift"; then
-    echo "ERROR: Package.swift does not reference $REPOSITORY $TAG" >&2
+APPSTORE_URL="https://github.com/$REPOSITORY/releases/download/$TAG/GhosttyKitAppStore.xcframework.zip"
+STANDALONE_URL="https://github.com/$REPOSITORY/releases/download/$TAG/GhosttyKitStandalone.xcframework.zip"
+if [[ "$(manifest_url_count "$APPSTORE_URL")" != 1 ||
+      "$(manifest_url_count "$STANDALONE_URL")" != 1 ]]; then
+    echo "ERROR: Package.swift must reference each expected $REPOSITORY $TAG asset exactly once" >&2
     exit 1
 fi
 
