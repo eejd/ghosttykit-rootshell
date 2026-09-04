@@ -140,6 +140,10 @@ manifest_checksum() {
 }
 
 if [[ "$MODE" == prepare ]]; then
+    if [[ -n "$(git -C "$PACKAGE_DIR" status --porcelain)" ]]; then
+        echo "ERROR: package repository must be clean before preparing a release" >&2
+        exit 1
+    fi
     if [[ -z "$ROOTSHELL_SOURCE" && -x "$PACKAGE_DIR/../swift-rootshell/scripts/build-framework.sh" ]]; then
         ROOTSHELL_SOURCE="$PACKAGE_DIR/../swift-rootshell"
     fi
