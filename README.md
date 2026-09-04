@@ -58,7 +58,9 @@ up-to-date default branch:
 ```
 
 The publish phase verifies the reviewed manifest and draft assets before it
-tags the merged commit and makes the release public.
+tags the merged commit and makes the release public. It also verifies that the
+local origin matches the selected repository and that each draft asset's
+GitHub SHA-256 digest matches the checksum committed in `Package.swift`.
 
 ## License
 
